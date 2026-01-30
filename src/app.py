@@ -1,69 +1,91 @@
-# app.py_STREAMLIT INTERFACE
+# app.py
 import streamlit as st
 import json
 import os
-from text_processor import download_nltk_data, clean_and_normalize
+import sys
+import traceback
+
+# Добавляем путь к модулям
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# Инициализация NLTK должна быть первой операцией
+try:
+    from text_processor import download_nltk_data
+    download_nltk_data()
+except Exception as e:
+    st.error(f"Ошибка инициализации NLTK: {e}")
+    st.stop()
+
+# Теперь импортируем остальные модули
+from text_processor import clean_and_normalize
 from tfidf import compute_tfidf, compute_artist_tfidf
 from collections import Counter
 import math
 
-
-# Загрузка NLTK-ресурсов. Natural Language Toolkit - это основная библиотека Python для работы с естественными языками (NLP)) 
-@st.cache_resource
-def init_nltk():
-    download_nltk_data()
-
-
-init_nltk()
-
-
-#  Загрузка и обработка данных (с кэшированием) 
-@st.cache_data
+# Кэшируем загрузку данных
+@st.cache_data(show_spinner="Загрузка данных...")
 def load_and_process_data():
-    data_path = os.path.join(os.path.dirname(__file__), "lyrics_data", "lyrics_all.json")
-
-    with open(data_path, "r", encoding="utf-8") as f:
-        raw_data = json.load(f)
-
-    processed = []
-    for item in raw_data:
-        lyrics = item.get("lyrics", "")
-        if not lyrics or not isinstance(lyrics, str):
-            continue
-        tokens = clean_and_normalize(lyrics)
-        if len(tokens) < 10:
-            continue
-
-        processed.append({
-            "artist": item["artist"],
-            "song_url": item["song_url"],
-            "original_lyrics": lyrics,
-            "tokens": tokens
-        })
-
-    corpus_tokens = [item["tokens"] for item in processed]
-    tfidf_scores = compute_tfidf(corpus_tokens)
-
-    # Вычисляем TF-IDF для артистов
-    artist_tfidf = compute_artist_tfidf(processed)
-
-    # НОВОЕ: Вычисляем статистику по корпусу
-    all_tokens = [token for item in processed for token in item["tokens"]]
-    word_freq = Counter(all_tokens)
-    total_words = len(all_tokens)
-
-    # Вычисляем IDF для каждого слова
-    N = len(processed)
-    word_idf = {}
-    for word in word_freq:
-        docs_containing_word = sum(1 for doc_tokens in corpus_tokens if word in doc_tokens)
-        word_idf[word] = math.log(N / docs_containing_word) if docs_containing_word > 0 else 0
-
-    for i, item in enumerate(processed):
-        item["tfidf"] = tfidf_scores[i]
-
-    return processed, corpus_tokens, tfidf_scores, artist_tfidf, word_freq, total_words, word_idf, N
-
+    try:
+        # Определяем путь к данным (работает локально и на Streamlit Cloud)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.join(current_dir, "lyrics_data")
+        data_path = os.path.join(data_dir, "lyrics_all.json")
+        
+        # Проверяем существование файла
+        if not os.path.exists(data_path):
+            # Пробуем альтернативный путь
+            data_path = "lyrics_data/lyrics_all.json"
+            if not os.path.exists(data_path):
+                raise FileNotFoundError(f"Файл не найден: {data_path}")
+        
+        with open(data_path, "r", encoding="utf-8") as f:
+            raw_data = json.load(f)
+        
+        # Обработка данных
+        processed = []
+        for item in raw_data:
+            lyrics = item.get("lyrics", "")
+            if not lyrics or not isinstance(lyrics, str):
+                continue
+            
+            tokens = clean_and_normalize(lyrics)
+            if len(tokens) < 10:
+                continue
+            
+            processed.append({
+                "artist": item["artist"],
+                "song_url": item["song_url"],
+                "original_lyrics": lyrics,
+                "tokens": tokens
+            })
+        
+        # Вычисляем TF-IDF
+        corpus_tokens = [item["tokens"] for item in processed]
+        tfidf_scores = compute_tfidf(corpus_tokens)
+        artist_tfidf = compute_artist_tfidf(processed)
+        
+        # Дополнительная статистика
+        all_tokens = [token for item in processed for token in item["tokens"]]
+        word_freq = Counter(all_tokens)
+        total_words = len(all_tokens)
+        
+        # Вычисляем IDF
+        N = len(processed)
+        word_idf = {}
+        for word in word_freq:
+            docs_containing_word = sum(1 for doc_tokens in corpus_tokens if word in doc_tokens)
+            word_idf[word] = math.log(N / docs_containing_word) if docs_containing_word > 0 else 0
+        
+        # Добавляем TF-IDF к каждому документу
+        for i, item in enumerate(processed):
+            item["tfidf"] = tfidf_scores[i]
+        
+        return processed, corpus_tokens, tfidf_scores, artist_tfidf, word_freq, total_words, word_idf, N
+        
+    except Exception as e:
+        st.error(f"Ошибка обработки данных: {e}")
+        st.write(traceback.format_exc())
+        return None, None, None, None, None, None, None, None
 
 def display_top_words(tfidf_dict, title, num_words=10):
     """Утилита для отображения топ-N слов."""
