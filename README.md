@@ -4,9 +4,6 @@
 
 Analyzing unique vocabulary of English-speaking music artists using a custom TF-IDF implementation.
 
-https://master-7coyw5njurarqxm6icgrq4.streamlit.app/
-
-
 <div align="center">
   
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://master-7coyw5njurarqxm6icgrq4.streamlit.app/)
