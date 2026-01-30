@@ -1,12 +1,25 @@
 # app.py
 import streamlit as st
+
+# ДОЛЖНО БЫТЬ ПЕРВОЙ КОМАНДОЙ STREAMLIT!
+st.set_page_config(
+    page_title="TF-IDF Анализ Песен",
+    page_icon="🎵",
+    layout="wide"
+)
+
+# Теперь импортируем остальные модули
 import json
 import os
 import sys
-import traceback
 
 # Добавляем путь к модулям
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from text_processor import download_nltk_data, clean_and_normalize
+from tfidf import compute_tfidf, compute_artist_tfidf
+from collections import Counter
+import math
 
 # Инициализация NLTK должна быть первой операцией
 try:
