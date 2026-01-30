@@ -1,8 +1,19 @@
-🎵 TF-IDF Analysis of Song Lyrics | Анализ текстов песен с помощью TF-IDF
+# 🎵 TF-IDF Analysis of Song Lyrics | Анализ текстов песен с помощью TF-IDF
 
 Анализ уникальной лексики англоязычных музыкальных исполнителей с помощью самостоятельно реализованного алгоритма TF-IDF.
 
 Analyzing unique vocabulary of English-speaking music artists using a custom TF-IDF implementation.
+
+https://master-7coyw5njurarqxm6icgrq4.streamlit.app/
+
+
+<div align="center">
+  
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://master-7coyw5njurarqxm6icgrq4.streamlit.app/)
+
+**🌐 Live Demo:** [https://master-7coyw5njurarqxm6icgrq4.streamlit.app/](https://master-7coyw5njurarqxm6icgrq4.streamlit.app/)
+
+</div>
 
 # Краткое описание
 Проект представляет собой полноценный пайплайн для сбора, обработки и анализа текстов песен с сайта Genius.com. Включает:
